@@ -1,0 +1,261 @@
+﻿<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Configuration" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.IO" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Xml.Linq" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Configuration" #>
+<#@ import namespace="System.Xml.Linq" #>
+<#@ import namespace="System.Xml" #>
+<#@ import namespace="Microsoft.VisualStudio.TextTemplating"#>
+<#@ import namespace="System.Runtime.Remoting.Messaging"#>
+<#@ import namespace="System.IO"#>
+<#@ output extension=".cs" #>
+// **********************************************************************************************************
+// This is an auto generated file and any changes directly applied to this file will be lost in next generation.
+// Please DO NOT modify this file but instead, update ErrorDefinitions.xml and/or Error.tt.
+// **********************************************************************************************************
+using System;
+using System.Globalization;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
+
+namespace AspNetCore.Sample.Common.ErrorHandling
+{
+    public static class Errors
+    {
+<#
+    var objDefinitionFile = Host.ResolvePath("ErrorDefinitions.xml");
+    var arrErrors =
+        from e in XDocument.Load(objDefinitionFile).Element("errors").Descendants("error")
+        select new
+        {
+            Code = e.Attribute("code").Value,
+            HttpStatusCode = e.Attribute("httpStatusCode").Value,
+            Message = e.Value.Trim(),
+            Retriable = e.Attribute("retriable") == null ? "false" : e.Attribute("retriable").Value,
+            GenericMethod = ExtractParameters(e.Value.Trim()).Any(p => p.Value != "object")
+        };
+
+    foreach (var objError in arrErrors)
+    {
+#>
+        public static APIError <#= objError.Code #><#= objError.GenericMethod ? "<T>" : "" #>(<#= string.Join(", ", ExtractParameters(objError.Message).Select(p => p.Value + " " + p.Key)) #>)
+        {
+            return new APIError
+            {
+                ErrorCode = "<#= ToSnakeCaseName(objError.Code) #>",
+                HttpStatusCode = <#= objError.HttpStatusCode #>,
+                ErrorMessage = <#= GenerateErrorMessageFormatStatement(objError.Message) #>,
+                Retriable = <#= objError.Retriable #>
+            };
+        }
+
+<#
+    }
+#>
+        private const string NotAvailable = "n/a";
+
+        private static string GetString(object objValue)
+        {
+            if (objValue == null)
+            {
+                return "null";
+            }
+
+            return objValue.ToString();
+        }
+
+        private static string GetSnakeCaseFieldName<T>(Expression<Func<T, object>> objFieldExpr)
+        {
+            if (objFieldExpr == null)
+            {
+                return NotAvailable;
+            }
+
+            MemberExpression objMemberExpr = objFieldExpr.Body as MemberExpression;
+            if (objMemberExpr == null)
+            {
+                var objUnaryExpr = objFieldExpr.Body as UnaryExpression;
+                if (objUnaryExpr != null)
+                {
+                    objMemberExpr = objUnaryExpr.Operand as MemberExpression;
+                }
+            }
+
+            if (objMemberExpr == null)
+            {
+                throw new NotSupportedException();
+            }
+
+            var strFieldName = (objMemberExpr.Member as PropertyInfo).Name;
+
+            return ToSnakeCaseName(strFieldName);
+        }
+
+        private static string ToSnakeCaseName(string strPropertyName)
+        {
+            if (string.IsNullOrEmpty(strPropertyName))
+            {
+                return strPropertyName;
+            }
+
+            var objSnakeCaseName = new StringBuilder();
+
+            var objUpperPart = new StringBuilder();
+
+            for (int index = 0; index < strPropertyName.Length; index++)
+            {
+                if (char.IsUpper(strPropertyName[index]))
+                {
+                    objUpperPart.Append(char.ToLower(strPropertyName[index], CultureInfo.CurrentCulture));
+
+                    if (index == strPropertyName.Length - 1)
+                    {
+                        if (objUpperPart.Length != strPropertyName.Length)
+                        {
+                            objSnakeCaseName.Append("_");
+                        }
+
+                        objSnakeCaseName.Append(objUpperPart);
+
+                        objUpperPart.Clear();
+                    }
+                }
+                else
+                {
+                    if (objUpperPart.Length > 0)
+                    {
+                        if (objUpperPart.Length != index)
+                        {
+                            objSnakeCaseName.Append("_");
+                        }
+
+                        if (objUpperPart.Length > 1)
+                        {
+                            objSnakeCaseName.Append(objUpperPart.ToString().Substring(0, objUpperPart.Length - 1));
+                            objSnakeCaseName.Append("_");
+                            objSnakeCaseName.Append(objUpperPart.ToString().Substring(objUpperPart.Length - 1));
+                        }
+                        else
+                        {
+                            objSnakeCaseName.Append(objUpperPart);
+                        }
+
+                        objUpperPart.Clear();
+                    }
+
+                    objSnakeCaseName.Append(strPropertyName[index]);
+                }
+            }
+
+            return objSnakeCaseName.ToString();
+        }
+    }
+}
+<#+
+    private static Regex s_parameterRegex = new Regex(@"{[\w|:]+}", RegexOptions.Compiled);
+    
+    private Dictionary<string, string> ExtractParameters(string strErrorMessage)
+    {
+        var arrMatches = s_parameterRegex.Matches(strErrorMessage);
+
+        var arrRawParams = arrMatches.Cast<Match>().Select(m => m.Groups[0].Value.Substring(1, m.Groups[0].Value.Length - 2)).ToArray();
+
+        return (from p in arrRawParams
+                let arrParts = p.Split(':')
+                let strName = arrParts[0]
+                let strType = arrParts.Length > 1 ? arrParts[1] : null
+                select new
+                {
+                    strName = arrParts[0],
+                    strType = strType == "field" ? "Expression<Func<T, object>>" : "object"
+                }).ToDictionary(k => k.strName, v => v.strType);
+    }
+
+    private string GenerateErrorMessageFormatStatement(string strErrorMessage)
+    {
+        var arrResult = new List<string>();
+
+        var arrParameters = ExtractParameters(strErrorMessage).ToArray();
+        for (var i = 0; i < arrParameters.Length; ++i)
+        {
+            var objOriginalParam = arrParameters[i].Key + (arrParameters[i].Value == "object" ? "" : ":field");
+            strErrorMessage = strErrorMessage.Replace(objOriginalParam, i.ToString());
+
+            if (arrParameters[i].Value == "object")
+                arrResult.Add("GetString(" + arrParameters[i].Key + ")");
+            else
+                arrResult.Add("GetSnakeCaseFieldName<T>(" + arrParameters[i].Key + ")");
+        }
+
+        arrResult.Insert(0, "\"" + strErrorMessage + "\"");
+
+        if (arrResult.Count == 1)
+            return arrResult[0];
+
+        return string.Format("string.Format({0})", string.Join(", ", arrResult));
+    }
+
+    private static string ToSnakeCaseName(string strPropertyName)
+    {
+        if (string.IsNullOrEmpty(strPropertyName))
+            return strPropertyName;
+
+        StringBuilder objSnakeCaseName = new StringBuilder();
+
+        StringBuilder objUpperPart = new StringBuilder();
+
+        for (int nIndex = 0; nIndex < strPropertyName.Length; nIndex++)
+        {
+            if (char.IsUpper(strPropertyName[nIndex]))
+            {
+                objUpperPart.Append(char.ToLower(strPropertyName[nIndex]));
+
+                if (nIndex == strPropertyName.Length - 1)
+                {
+                    if (objUpperPart.Length != strPropertyName.Length)
+                    {
+                        objSnakeCaseName.Append("_");
+                    }
+                    objSnakeCaseName.Append(objUpperPart);
+
+                    objUpperPart.Clear();
+                }
+            }
+            else
+            {
+                if (objUpperPart.Length > 0)
+                {
+                    if (objUpperPart.Length != nIndex)
+                    {
+                        objSnakeCaseName.Append("_");
+                    }
+
+                    if (objUpperPart.Length > 1)
+                    {
+                        objSnakeCaseName.Append(objUpperPart.ToString().Substring(0, objUpperPart.Length - 1));
+                        objSnakeCaseName.Append("_");
+                        objSnakeCaseName.Append(objUpperPart.ToString().Substring(objUpperPart.Length - 1));
+                    }
+                    else
+                    {
+                        objSnakeCaseName.Append(objUpperPart);
+                    }
+
+                    objUpperPart.Clear();
+                }
+
+                objSnakeCaseName.Append(strPropertyName[nIndex]);
+            }
+
+        }
+
+        return objSnakeCaseName.ToString();
+    }
+#>

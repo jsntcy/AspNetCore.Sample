@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>AspNetCore.Sample.UnitTests</RootNamespace>
+    <CodeAnalysisRuleSet>..\..\Shared\StyleCop\stylecop.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\**" />
+    <EmbeddedResource Remove="Controllers\**" />
+    <None Remove="Controllers\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.7.0" />
+    <PackageReference Include="Moq" Version="4.9.0" />
+    <PackageReference Include="xunit" Version="2.3.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Source\Repository\Repository.Interface\Repository.Interface.csproj" />
+    <ProjectReference Include="..\..\Source\Repository\Repository.Local\Repository.Local.csproj" />
+    <ProjectReference Include="..\..\Source\Service\Service.Implementation\Service.Implementation.csproj" />
+    <ProjectReference Include="..\..\Source\Service\Service.Interface\Service.Interface.csproj" />
+  </ItemGroup>
+
+</Project>

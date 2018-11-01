@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<errors>
+  <error code="InternalServerError" httpStatusCode="500">
+    An unexpected server error happened, please use operation id in response header to get help.
+  </error>
+  <error code="Unauthorized" httpStatusCode="401">
+    Bad credentials
+  </error>
+  <error code="ETagNotMatch" httpStatusCode="412">
+    Your update to database conflicts with other operations, please retry.
+  </error>
+</errors>

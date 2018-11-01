@@ -1,0 +1,138 @@
+{
+	"info": {
+		"_postman_id": "6648ece7-3192-4e05-bd46-d3abbb3c08ff",
+		"name": "rating-service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Sets rating for a page",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"pageType\": \"Learn\",\r\n    \"pageKind\": \"Module\",\r\n    \"locale\": \"zh-cn\",\r\n    \"ratingScore\": 3,\r\n    \"questionAndAnswers\":\r\n    [\r\n        {\r\n            \"questionId\": \"questionId1\",\r\n            \"answerIds\":\r\n            [\r\n              \"answerId1\",\r\n              \"answerId2\"\r\n            ],\r\n            \"comments\": \"need improve\"\r\n        }\r\n    ],\r\n    \"metadata\":\r\n    {\r\n        \"ratingLocation\": \"module_completion_page\",\r\n        \"moduleProgress\": 0.4\r\n    }\r\n}"
+				},
+				"url": {
+					"raw": "https://docslearning-rating-internal.azurewebsites.net/user/pages/page-1/rating",
+					"protocol": "https",
+					"host": [
+						"docslearning-rating-internal",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"user",
+						"pages",
+						"page-1",
+						"rating"
+					]
+				},
+				"description": "Sets rating for a page"
+			},
+			"response": []
+		},
+		{
+			"name": "Gets rating for a page including average rating score and rating count",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "https://docslearning-rating-internal.azurewebsites.net/pages/page-1/rating",
+					"protocol": "https",
+					"host": [
+						"docslearning-rating-internal",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"pages",
+						"page-1",
+						"rating"
+					]
+				},
+				"description": "Gets rating for a page including average rating score and rating count."
+			},
+			"response": []
+		},
+		{
+			"name": "Gets user's rating for a page",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "https://docslearning-rating-internal.azurewebsites.net/user/pages/page-1/rating",
+					"protocol": "https",
+					"host": [
+						"docslearning-rating-internal",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"user",
+						"pages",
+						"page-1",
+						"rating"
+					]
+				},
+				"description": "Gets user's rating for a page"
+			},
+			"response": []
+		},
+		{
+			"name": "Gets all rating history for a user",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "https://docslearning-rating-internal.azurewebsites.net/user/ratings/history",
+					"protocol": "https",
+					"host": [
+						"docslearning-rating-internal",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"user",
+						"ratings",
+						"history"
+					]
+				},
+				"description": "Gets all rating history for a user"
+			},
+			"response": []
+		},
+		{
+			"name": "Deletes all ratings related to a user",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "https://docslearning-rating-internal.azurewebsites.net/user/ratings",
+					"protocol": "https",
+					"host": [
+						"docslearning-rating-internal",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"user",
+						"ratings"
+					]
+				},
+				"description": "Deletes all ratings related to a user."
+			},
+			"response": []
+		}
+	]
+}
